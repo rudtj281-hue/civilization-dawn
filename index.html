@@ -446,7 +446,10 @@ function focusPages(name, groups) {
  });
  heading.insertAdjacentElement('afterend',nav);nav.insertAdjacentElement('afterend',region);
  if(pages.length<2){
-  nav.hidden=true;focusStep[name]=0;return;
+  nav.hidden=true;focusStep[name]=0;
+  const container=root.closest('.main-content');
+  if(container){container.style.overflowY='hidden';const page=pages[0];const room=Math.max(240,window.innerHeight-page.getBoundingClientRect().top-92);const needed=page.scrollHeight;if(needed>room){const factor=Math.max(.84,Math.min(1,room/needed));page.style.zoom=String(factor);if(needed*factor>room+6)container.style.overflowY='auto';}}
+  return;
  }
  const label=document.createElement('span');label.className='focus-count';
  const buttons=pagelist.map((g,i)=>{
@@ -460,6 +463,21 @@ function focusPages(name, groups) {
   pages.forEach((p,i)=>{p.hidden=(i!==focusStep[name]);});
   buttons.forEach((b,i)=>{b.classList.toggle('active',i===focusStep[name]);b.setAttribute('aria-selected',i===focusStep[name]?'true':'false');});
   label.textContent=(focusStep[name]+1)+' / '+pages.length;
+  fitFocusPage(page,root);
+ }
+ function fitFocusPage(page,root){
+  const container=root.closest('.main-content');
+  if(!page||!container)return;
+  page.style.zoom='1';container.style.overflowY='hidden';
+  // Prefer a slight responsive reduction to chopping off controls.
+  const room=Math.max(230,window.innerHeight-page.getBoundingClientRect().top-(window.innerWidth<850?88:92));
+  const required=page.scrollHeight;
+  if(required>room){
+    const factor=Math.max(.84,Math.min(1,room/required));
+    page.style.zoom=String(factor);
+    // Never make unreachable content: allow scrolling only on genuinely tiny viewports.
+    if(required*factor>room+6)container.style.overflowY='auto';
+  }
  }
  activate(focusStep[name]||0);
 }
@@ -571,6 +589,7 @@ function renderChronicle(){
 window.addEventListener('resize',()=>{
  const compact=window.innerWidth<850;
  if(compact!==focusCompact){focusCompact=compact;renderView();}
+ else {const b=document.querySelector('#'+view+'View .focus-tab.active');if(b)b.click();}
 });
 
 function init(){let loaded=false;try{let raw=localStorage.getItem(STORAGE);if(raw){let obj=JSON.parse(raw);if(validateSave(obj)){state=obj;state.domestication ||= {grain:2,sheep:1,horse:1};state.domesticationProjects ||= [];state.identity ||= {culture:1,nation:0,religion:0};selectedTile=state.capital;reportIndex=state.reports.length-1;loaded=true;}}}catch(e){console.warn(e);}if(!loaded)newGame();
@@ -648,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
 .focus-page .filter-btn{padding:5px 9px;font-size:11px}
 .focus-page .research-active,.focus-page .in-progress{margin-bottom:7px;padding:9px}
 .focus-page .recipe-preview{margin:8px 0;padding:12px}
-.focus-page .map-svg{height:min(565px,calc(100dvh - 220px))}
+.focus-page .map-svg{height:min(565px,calc(100dvh - 290px))}
 .focus-page .map-panel{min-height:0;padding:0}
 .focus-page .map-right{height:auto}
 .focus-page .log-list{max-height:none;overflow:visible}
